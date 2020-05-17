@@ -8,6 +8,7 @@ import click
 import flask
 import requests
 from google import protobuf
+from google.protobuf.json_format import MessageToDict
 from cortex import cortex_client_pb2
 from pathlib import Path
 USERS_DIR = Path("./users")
@@ -49,26 +50,23 @@ def publish_snapshot(user_id):
     datetime_str = datetime.fromtimestamp(snapshot_client.datetime/ 1000).strftime('%Y-%m-%d_%H-%M-%S_%f')
     snapshot_dir = USERS_DIR / user_id / datetime_str
     snapshot_dir.mkdir(exist_ok=True)
-    from google.protobuf.json_format import MessageToDict
-    msg = MessageToDict(snapshot_client)
-    # msg = dict()
-    # msg['datetime'] = snapshot_client.datetime
-    # msg['pose'] = {'rotation': snapshot_client.pose.rotation,
-    #                'translation': snapshot_client.pose.translation}
+
+    msg = MessageToDict(snapshot_client, preserving_proto_field_name=True)
+    msg['user_id'] = user_id
     color_image_path = snapshot_dir/"color_image"
     with open(color_image_path, 'wb') as fh:
         fh.write(snapshot_client.color_image.data)
-    del msg['colorImage']['data']
-    msg['colorImage']['path'] = str(color_image_path)
+    del msg['color_image']['data']
+    msg['color_image']['path'] = str(color_image_path)
     # msg['color_image'] = {"width" : snapshot_client.color_image.width,
     #                       "height": snapshot_client.color_image.height,
     #                       "path" : color_image_path}
     depth_image_path = snapshot_dir / "depth_image"
     with open(depth_image_path, 'wb') as fh:
-        for d in msg['depthImage']['data']:
+        for d in msg['depth_image']['data']:
             fh.write(struct.pack('f', d))
-    del msg['depthImage']['data']
-    msg['depthImage']['path'] = str(depth_image_path)
+    del msg['depth_image']['data']
+    msg['depth_image']['path'] = str(depth_image_path)
     # msg['depth_image'] = {"width": snapshot_client.depth_image.width,
     #                       "height": snapshot_client.depth_image.height,
     #                       "path": color_image_path}
@@ -91,11 +89,10 @@ def get_rabbit_mq_publish_function(url):
     params = pika.ConnectionParameters(host=url.hostname, port=url.port)
     connection = pika.BlockingConnection(params)
     channel = connection.channel()
-    channel.queue_declare('Thought')
-
+    channel.exchange_declare(exchange='cortex', exchange_type='topic')
     def publish(msg):
-        return channel.basic_publish(exchange='',
-                                     routing_key='',
+        return channel.basic_publish(exchange='cortex',
+                                     routing_key='snapshot',
                                      body=json.dumps(msg))
     return publish
 
