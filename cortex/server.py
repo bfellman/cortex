@@ -59,9 +59,6 @@ def publish_snapshot(user_id):
         fh.write(snapshot_client.color_image.data)
     del msg['color_image']['data']
     msg['color_image']['path'] = str(color_image_path)
-    # msg['color_image'] = {"width" : snapshot_client.color_image.width,
-    #                       "height": snapshot_client.color_image.height,
-    #                       "path" : color_image_path}
     depth_image_path = snapshot_dir / "depth_image"
     with open(depth_image_path, 'wb') as fh:
         for d in msg['depth_image']['data']:
@@ -83,7 +80,10 @@ def main():
 
 def get_rabbit_mq_publish_function(url):
     params = pika.ConnectionParameters(host=url.hostname, port=url.port)
-    connection = pika.BlockingConnection(params)
+    try:
+        connection = pika.BlockingConnection(params)
+    except Exception as e:
+        exit(f"ERROR: can't connect to message queue: {url.geturl()}\n{e}")
     channel = connection.channel()
     channel.exchange_declare(exchange='cortex', exchange_type='topic')
     def publish(msg):

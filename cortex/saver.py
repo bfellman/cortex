@@ -1,3 +1,4 @@
+from pprint import pprint
 from urllib.parse import urlparse
 
 import click
@@ -19,12 +20,13 @@ class Saver:
     def save(self, topic_name, data):
         unpacked_data = json.loads(data)
         if topic_name in unpacked_data:
-            self.db.snapshots.update_one({"_id": unpacked_data['user_id'], 'datetime': unpacked_data['datetime']}, {'$set': {topic_name: unpacked_data[topic_name]}}, upsert=True)
-        print(list(self.db.snapshots.find()))
-        print(list(self.db.users.find()))
+            self.db.snapshots.update_many({"id": unpacked_data['user_id'], 'datetime': unpacked_data['datetime']}, {'$set': {topic_name: unpacked_data[topic_name]}}, upsert=True)
+        pprint(list(self.db.snapshots.find())) #TODO remove
+
 
     def add_user(self, user_dict):
         self.db.users.insert_one(user_dict)
+        pprint(list(self.db.users.find()))  # TODO remove
 
     def handle_snapshot(self, data):
         # listen to all anspshots to catch user id
