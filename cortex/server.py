@@ -1,5 +1,5 @@
 import json
-import os
+
 from urllib.parse import urlparse
 import struct
 from datetime import datetime
@@ -15,10 +15,6 @@ USERS_DIR = Path("./users")
 
 app = flask.Flask(__name__)
 
-def get_users():
-    if 'users' not in flask.g:
-        flask.g.users = dict()
-    return flask.g.users
 
 @app.route('/', methods=['POST'])
 def default_response():
@@ -32,12 +28,16 @@ def publish_user():
     try:
         user.ParseFromString(user_msg)
         Path.mkdir(USERS_DIR / str(user.user_id), exist_ok=True, parents=True)
+        msg = MessageToDict(user, preserving_proto_field_name=True)
+        msg['msg_type'] = 'user'
+        app.config['PUBLISH'](json.dumps(msg))
+
     except protobuf.message.DecodeError as e:
         r = requests.Response()
         r.status_code = requests.codes.server_error
         r.reason = f"Expecting User in 'cortex_client_pb2' protobuf format, got:\n{e}"
         return r
-    print(user)
+
     return flask.jsonify(success=True)
 
 
@@ -53,6 +53,7 @@ def publish_snapshot(user_id):
 
     msg = MessageToDict(snapshot_client, preserving_proto_field_name=True)
     msg['user_id'] = user_id
+    msg['msg_type'] = 'snapshot'
     color_image_path = snapshot_dir/"color_image"
     with open(color_image_path, 'wb') as fh:
         fh.write(snapshot_client.color_image.data)
@@ -67,12 +68,7 @@ def publish_snapshot(user_id):
             fh.write(struct.pack('f', d))
     del msg['depth_image']['data']
     msg['depth_image']['path'] = str(depth_image_path)
-    # msg['depth_image'] = {"width": snapshot_client.depth_image.width,
-    #                       "height": snapshot_client.depth_image.height,
-    #                       "path": color_image_path}
-    # msg['feeling'] = snapshot_client.feelings
-    # msg['user_id'] = user_id
-    app.config['PUBLISH'](msg)
+    app.config['PUBLISH'](json.dumps(msg))
     return flask.jsonify(success=True)
 
 
@@ -93,7 +89,7 @@ def get_rabbit_mq_publish_function(url):
     def publish(msg):
         return channel.basic_publish(exchange='cortex',
                                      routing_key='snapshot',
-                                     body=json.dumps(msg))
+                                     body=msg)
     return publish
 
 @main.command('run-server')
