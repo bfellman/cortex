@@ -1,4 +1,5 @@
 import json
+import tempfile
 
 from urllib.parse import urlparse
 import struct
@@ -7,18 +8,20 @@ import pika
 import click
 import flask
 import requests
+import tempfile
 from google import protobuf
 from google.protobuf.json_format import MessageToDict
 from cortex import cortex_client_pb2
 from pathlib import Path
-USERS_DIR = Path("./users")
+
+USERS_DIR = Path(tempfile.mkdtemp()) / "users"
 
 app = flask.Flask(__name__)
 
 
 @app.route('/', methods=['POST'])
 def default_response():
-    return flask.jsonify(success=False, message="Only supported requests are PORT with '/new_user' and '/snapshot' URLs")
+    return flask.jsonify(success=False, message="Only supported requests are POST with '/new_user' and '/snapshot' URLs")
 
 
 @app.route('/user', methods=['POST'])
@@ -54,7 +57,7 @@ def publish_snapshot(user_id):
     msg = MessageToDict(snapshot_client, preserving_proto_field_name=True)
     msg['user_id'] = user_id
     msg['msg_type'] = 'snapshot'
-    color_image_path = snapshot_dir/"color_image"
+    color_image_path = snapshot_dir / "color_image"
     with open(color_image_path, 'wb') as fh:
         fh.write(snapshot_client.color_image.data)
     del msg['color_image']['data']
@@ -67,11 +70,6 @@ def publish_snapshot(user_id):
     msg['depth_image']['path'] = str(depth_image_path)
     app.config['PUBLISH'](json.dumps(msg))
     return flask.jsonify(success=True)
-
-
-
-def print_message(message):
-    print(message)
 
 @click.group()
 def main():

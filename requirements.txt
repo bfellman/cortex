@@ -1,3 +1,4 @@
 click>=7.1.1
 grpcio-tools>=1.28.1
 pika>=1.1.0
+funcy

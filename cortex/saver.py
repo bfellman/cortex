@@ -1,9 +1,11 @@
+from pathlib import Path
 from pprint import pprint
 from urllib.parse import urlparse
 
 import click
 import pika
 from pymongo import MongoClient, ASCENDING
+import gridfs
 import json
 
 
@@ -14,18 +16,36 @@ class Saver:
             client = MongoClient(parsed_url.hostname, parsed_url.port)
             client.drop_database('cortex_db') #TODO remove
             self.db = client.cortex_db
+            self.fs = gridfs.GridFS(self.db)
+            self.db.users.create_index([("user_id", ASCENDING)], unique=True)
+            self.db.snapshots.create_index([("user_id", ASCENDING), ("datetime", ASCENDING)])
         else:
             exit("Unknown DB")
 
     def save(self, topic_name, data):
         unpacked_data = json.loads(data)
         if topic_name in unpacked_data:
-            self.db.snapshots.update_many({"id": unpacked_data['user_id'], 'datetime': unpacked_data['datetime']}, {'$set': {topic_name: unpacked_data[topic_name]}}, upsert=True)
+            topic_dict = unpacked_data[topic_name]
+            snapshot_key = {"user_id": unpacked_data['user_id'], 'datetime': unpacked_data['datetime']}
+            for k, v in topic_dict.items():
+                if Path(str(v)).exists():
+                    topic_dict[k] = self.fs.put(open(v, 'rb'))
+            if self.db.snapshots.find_one(snapshot_key):
+                self.db.snapshots.update_many(snapshot_key, {'$set': {topic_name: topic_dict}})
+            else:
+                try:
+                    snapshot_id = self.db.snapshots.find_one({'$query': {}, '$orderby': {'_id': -1}})['_id']+1
+                except TypeError:
+                    snapshot_id = 0
+                snapshot_key['_id'] = snapshot_id
+                self.db.snapshots.insert(snapshot_key, {'$set': {topic_name: topic_dict}})
+        print('DB is')
         pprint(list(self.db.snapshots.find())) #TODO remove
 
 
+
     def add_user(self, user_dict):
-        self.db.users.insert_one(user_dict)
+        self.db.users.update({'user_id': user_dict['user_id']}, user_dict, upsert=True)
         pprint(list(self.db.users.find()))  # TODO remove
 
     def handle_snapshot(self, data):
