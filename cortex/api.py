@@ -19,12 +19,40 @@ app = flask.Flask(__name__)
 
 @app.route('/', methods=['GET'])
 def default_response():
-    return flask.jsonify(success=False, message=f"Only supported requests are {app.url_map}")
+    return flask.jsonify(success=False, message=f"Only supported requests are {app.url_map}"), requests.codes.bad_request
+
 
 @app.route('/users', methods=['GET'])
 def get_users():
     users = [project(d, ['user_id', 'username']) for d in app.config['DB'].users.find()]
     return flask.jsonify(success=True, message=users)
+
+
+@app.route('/users/<user_id>', methods=['GET'])
+def get_user_details(user_id):
+    res = app.config['DB'].users.find_one({'user_id': user_id})
+    if res is None:
+        return flask.jsonify(success=False, message=f"couldn't find {user_id=}"), requests.codes.not_found
+    user_data = project(res, ['user_id', 'username', 'birthday', 'gender'])
+    return flask.jsonify(success=True, message=user_data)
+
+
+@app.route('/users/<user_id>/snapshots', methods=['GET'])
+def get_user_snapshots(user_id):
+    res = app.config['DB'].snapshots.find({'user_id': user_id})
+    if res is None:
+        return flask.jsonify(success=False, message=f"couldn't find {user_id=}"), requests.codes.not_found
+    snapshots = [project(d, ['user_id', 'datetime', '_id']) for d in res]
+    return flask.jsonify(success=True, message=snapshots)
+
+
+@app.route('/users/<user_id>/snapshots/<snapshot_id>', methods=['GET'])
+def get_snapshot_topics(user_id, snapshot_id):
+    res = app.config['DB'].snapshots.find_one({'user_id': user_id, '_id': int(snapshot_id)})
+    print(res)
+    if res is None:
+        return flask.jsonify(success=False, message=f"couldn't find {snapshot_id=} for {user_id=}"), requests.codes.not_found
+    return flask.jsonify(success=True, message=res)
 
 
 @click.group()

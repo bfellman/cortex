@@ -1,6 +1,7 @@
 import gzip
 import struct
 import time
+from datetime import date, datetime
 from pprint import pprint
 
 import requests
@@ -11,14 +12,13 @@ from flask import json
 from tabulate import tabulate
 
 from cortex import cortex_client_pb2
-from cortex import cortex_sample_pb2
-from urllib.parse import urlunparse
+
 
 def get_from_server(server_url, msg=""):
     try:
         response = requests.get(server_url, data=msg, timeout=2)
         if response.status_code != requests.codes.ok:
-            exit(f"ERROR: server response code is {response.status_code}, with message: {response.reason}")
+            exit(f"ERROR: server response code is {response.status_code}, with message: {json.loads(response.text)['message']}")
         return json.loads(response.text)['message']
     except (requests.exceptions.ConnectionError, requests.exceptions.ReadTimeout)  as e:
         exit(f"ERROR: couldnt connect to Server at {server_url}, details:\n{e}")
@@ -49,6 +49,44 @@ def get_users(host, port):
     resp = get_from_server(req_url)
     if resp:
         print(tabulate(resp, headers="keys"))
+
+
+@main.command('get-user')
+@click.option('-h', '--host', default="127.0.0.1", help='target api host')
+@click.option('-p', '--port', default="5000", help='target api port')
+@click.argument('user_id')
+def get_user(host, port, user_id):
+    req_url = f"http://{host}:{port}/users/{user_id}"
+    resp = get_from_server(req_url)
+    resp['birthday'] = date.fromtimestamp(resp['birthday']).isoformat()
+    if resp:
+        print(tabulate([resp], headers="keys"))
+
+
+@main.command('get-snapshots')
+@click.option('-h', '--host', default="127.0.0.1", help='target api host')
+@click.option('-p', '--port', default="5000", help='target api port')
+@click.argument('user_id')
+def get_user(host, port, user_id):
+    req_url = f"http://{host}:{port}/users/{user_id}/snapshots"
+    resp = get_from_server(req_url)
+    for r in resp:
+        r['datetime'] = datetime.fromtimestamp(int(r['datetime']) / 1000).isoformat()
+    if resp:
+        print(tabulate(resp, headers="keys"))
+
+
+@main.command('get-snapshot')
+@click.option('-h', '--host', default="127.0.0.1", help='target api host')
+@click.option('-p', '--port', default="5000", help='target api port')
+@click.argument('user_id')
+@click.argument('snapshot_id')
+def get_user(host, port, user_id, snapshot_id):
+    req_url = f"http://{host}:{port}/users/{user_id}/snapshots/{snapshot_id}"
+    resp = get_from_server(req_url)
+    if resp:
+        resp_dict = {'topics': resp}
+        print(tabulate(resp_dict, headers="keys"))
 
 
 if __name__ == "__main__":
