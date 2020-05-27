@@ -1,9 +1,7 @@
 import json
-import tempfile
-
 from urllib.parse import urlparse
-import struct
 from datetime import datetime
+import numpy as np
 import pika
 import click
 import flask
@@ -62,10 +60,8 @@ def publish_snapshot(user_id):
         fh.write(snapshot_client.color_image.data)
     del msg['color_image']['data']
     msg['color_image']['path'] = str(color_image_path)
-    depth_image_path = snapshot_dir / "depth_image"
-    with open(depth_image_path, 'wb') as fh:
-        for d in msg['depth_image']['data']:
-            fh.write(struct.pack('f', d))
+    depth_image_path = snapshot_dir / "depth_image.npy"
+    np.save(depth_image_path, msg['depth_image']['data'])
     del msg['depth_image']['data']
     msg['depth_image']['path'] = str(depth_image_path)
     app.config['PUBLISH'](json.dumps(msg))

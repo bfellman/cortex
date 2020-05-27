@@ -1,14 +1,9 @@
 import gzip
 import struct
-import time
-
 import requests
-import sys
-
 import click
 from cortex import cortex_client_pb2
 from cortex import cortex_sample_pb2
-
 
 
 def upload_sample(host, port, path):
@@ -24,7 +19,6 @@ def upload_sample(host, port, path):
 
 
 def send_msg_to_server(msg, server_url):
-    print(f"going to send {str(msg)[:80]}")
     try:
         response = requests.post(server_url, data=msg.SerializeToString(), timeout=2)
         if response.status_code != requests.codes.ok:
@@ -53,11 +47,10 @@ def sample_reader(path):
             sample_user.ParseFromString(sample_fh.read(msg_len))
             client_user = client_user_from_sample_user(sample_user)
             yield client_user
-
             while chunk := sample_fh.read(4):
                 (msg_len,) = struct.unpack('I', chunk)
                 sample_snapshot = cortex_sample_pb2.Snapshot()
-                sample_snapshot.ParseFromString(sample_fh.read(msg_len))
+                sample_snapshot.ParseFromString(sample_fh.read(msg_len), )
                 client_snapshot = client_snapshot_from_sample_snapshot(sample_snapshot)
                 yield client_snapshot
     except IOError:
