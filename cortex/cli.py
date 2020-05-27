@@ -64,8 +64,8 @@ def get_users(host, port):
 def get_user(host, port, user_id):
     req_url = f"http://{host}:{port}/users/{user_id}"
     resp = get_from_server(req_url)
-    resp['birthday'] = date.fromtimestamp(resp['birthday']).isoformat()
     if resp:
+        resp['birthday'] = date.fromtimestamp(resp['birthday']).isoformat()
         print(tabulate([resp], headers="keys"))
 
 
@@ -76,9 +76,10 @@ def get_user(host, port, user_id):
 def get_snapshots(host, port, user_id):
     req_url = f"http://{host}:{port}/users/{user_id}/snapshots"
     resp = get_from_server(req_url)
-    for r in resp:
-        r['datetime'] = datetime.fromtimestamp(int(r['datetime']) / 1000).isoformat()
     if resp:
+        for r in resp:
+            r['datetime'] = datetime.fromtimestamp(int(r['datetime']) / 1000).isoformat()
+        print(f"# snapshots for {user_id=}")
         print(tabulate(resp, headers="keys"))
 
 
@@ -92,6 +93,7 @@ def get_snapshot(host, port, user_id, snapshot_id):
     resp = get_from_server(req_url)
     if resp:
         resp_dict = {'results': resp}
+        print(f"# results for {user_id=} {snapshot_id=}:")
         print(tabulate(resp_dict, headers="keys"))
 
 @main.command('get-result')
@@ -100,14 +102,14 @@ def get_snapshot(host, port, user_id, snapshot_id):
 @click.argument('user_id')
 @click.argument('snapshot_id')
 @click.argument('result_name')
-def get_result(host, port, user_id, snapshot_id,result_name):
+def get_result(host, port, user_id, snapshot_id, result_name):
     req_url = f"http://{host}:{port}/users/{user_id}/snapshots/{snapshot_id}/{result_name}"
     resp = get_from_server(req_url)
-    for k, v in resp.items():
-        if isinstance(v, str) and hyperlink.parse(v).scheme == "http":
-            resp[k] = hyperlink.parse(v).to_text()
-            print(v)
     if resp:
+        for k, v in resp.items():
+            if isinstance(v, str) and hyperlink.parse(v).scheme == "http":
+                resp[k] = hyperlink.parse(v).to_text()
+        print(f"# {result_name} for {user_id=} {snapshot_id=}:")
         print(tabulate([resp], headers="keys"))
 
 
