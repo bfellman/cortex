@@ -4,6 +4,7 @@ import time
 from datetime import date, datetime
 from pprint import pprint
 
+import hyperlink
 import requests
 import sys
 
@@ -18,7 +19,12 @@ def get_from_server(server_url, msg=""):
     try:
         response = requests.get(server_url, data=msg, timeout=2)
         if response.status_code != requests.codes.ok:
-            exit(f"ERROR: server response code is {response.status_code}, with message: {json.loads(response.text)['message']}")
+            err_msg = ""
+            try:
+                err_msg = json.loads(response.text)['message']
+            except:
+                pass
+            exit(f"ERROR: server response code is {response.status_code} {err_msg}")
         return json.loads(response.text)['message']
     except (requests.exceptions.ConnectionError, requests.exceptions.ReadTimeout)  as e:
         exit(f"ERROR: couldnt connect to Server at {server_url}, details:\n{e}")
@@ -67,7 +73,7 @@ def get_user(host, port, user_id):
 @click.option('-h', '--host', default="127.0.0.1", help='target api host')
 @click.option('-p', '--port', default="5000", help='target api port')
 @click.argument('user_id')
-def get_user(host, port, user_id):
+def get_snapshots(host, port, user_id):
     req_url = f"http://{host}:{port}/users/{user_id}/snapshots"
     resp = get_from_server(req_url)
     for r in resp:
@@ -81,12 +87,28 @@ def get_user(host, port, user_id):
 @click.option('-p', '--port', default="5000", help='target api port')
 @click.argument('user_id')
 @click.argument('snapshot_id')
-def get_user(host, port, user_id, snapshot_id):
+def get_snapshot(host, port, user_id, snapshot_id):
     req_url = f"http://{host}:{port}/users/{user_id}/snapshots/{snapshot_id}"
     resp = get_from_server(req_url)
     if resp:
-        resp_dict = {'topics': resp}
+        resp_dict = {'results': resp}
         print(tabulate(resp_dict, headers="keys"))
+
+@main.command('get-result')
+@click.option('-h', '--host', default="127.0.0.1", help='target api host')
+@click.option('-p', '--port', default="5000", help='target api port')
+@click.argument('user_id')
+@click.argument('snapshot_id')
+@click.argument('result_name')
+def get_result(host, port, user_id, snapshot_id,result_name):
+    req_url = f"http://{host}:{port}/users/{user_id}/snapshots/{snapshot_id}/{result_name}"
+    resp = get_from_server(req_url)
+    for k, v in resp.items():
+        if isinstance(v, str) and hyperlink.parse(v).scheme == "http":
+            resp[k] = hyperlink.parse(v).to_text()
+            print(v)
+    if resp:
+        print(tabulate([resp], headers="keys"))
 
 
 if __name__ == "__main__":
