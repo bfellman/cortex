@@ -60,7 +60,7 @@ def get_result_data(user_id, snapshot_id, result_name):
         if isinstance(v, objectid.ObjectId):
             suffix = app.config['FS'].get(v).suffix.lstrip('.')
             print(suffix)
-            if suffix in ['jpeg']:
+            if suffix in ['jpeg', 'png']:
                 db_res[result_name][k] = f"http:://{app.config['HOST_URL']}/get_file/image/{suffix}/{v}"
     print(app.__dict__)
     return flask.jsonify(success=True, message=db_res[result_name])
