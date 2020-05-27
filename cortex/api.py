@@ -56,9 +56,12 @@ def get_result_data(user_id, snapshot_id, result_name):
         return flask.jsonify(success=False, message=f"couldn't find {snapshot_id=} for {user_id=}"), requests.codes.not_found
     if result_name not in db_res:
         return flask.jsonify(success=False, message=f"couldn't find {result_name} in {snapshot_id=} for {user_id=}"), requests.codes.not_found
-    for k,v in db_res[result_name].items():
+    for k, v in db_res[result_name].items():
         if isinstance(v, objectid.ObjectId):
-            db_res[result_name][k] = f"http:://{app.config['HOST_URL']}/get_file/image/jpeg/{v}"
+            suffix = app.config['FS'].get(v).suffix.lstrip('.')
+            print(suffix)
+            if suffix in ['jpeg']:
+                db_res[result_name][k] = f"http:://{app.config['HOST_URL']}/get_file/image/{suffix}/{v}"
     print(app.__dict__)
     return flask.jsonify(success=True, message=db_res[result_name])
 
