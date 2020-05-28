@@ -10,9 +10,11 @@ from pymongo import MongoClient
 
 app = flask.Flask(__name__)
 
+
 @app.route('/', methods=['GET'])
 def default_response():
-    return flask.jsonify(success=False, message=f"Only supported requests are {app.url_map}"), requests.codes.bad_request
+    return flask.jsonify(success=False, message=f"Only supported requests are {app.url_map}"),\
+           requests.codes.bad_request
 
 
 @app.route('/users', methods=['GET'])
@@ -44,16 +46,20 @@ def get_snapshot_results(user_id, snapshot_id):
     db_res = app.config['DB'].snapshots.find_one({'user_id': user_id, '_id': int(snapshot_id)})
     results = [k for k, v in db_res.items() if isinstance(v, dict)]
     if db_res is None:
-        return flask.jsonify(success=False, message=f"couldn't find {snapshot_id=} for {user_id=}"), requests.codes.not_found
+        return flask.jsonify(success=False, message=f"couldn't find {snapshot_id=} for {user_id=}"),\
+               requests.codes.not_found
     return flask.jsonify(success=True, message=results)
+
 
 @app.route('/users/<user_id>/snapshots/<snapshot_id>/<result_name>', methods=['GET'])
 def get_result_data(user_id, snapshot_id, result_name):
     db_res = app.config['DB'].snapshots.find_one({'user_id': user_id, '_id': int(snapshot_id)})
     if db_res is None:
-        return flask.jsonify(success=False, message=f"couldn't find {snapshot_id=} for {user_id=}"), requests.codes.not_found
+        return flask.jsonify(success=False, message=f"couldn't find {snapshot_id=} for {user_id=}"),\
+               requests.codes.not_found
     if result_name not in db_res:
-        return flask.jsonify(success=False, message=f"couldn't find {result_name} in {snapshot_id=} for {user_id=}"), requests.codes.not_found
+        return flask.jsonify(success=False, message=f"couldn't find {result_name} in {snapshot_id=} for {user_id=}"),\
+               requests.codes.not_found
     for k, v in db_res[result_name].items():
         if isinstance(v, objectid.ObjectId):
             suffix = app.config['FS'].get(v).suffix.lstrip('.')
@@ -63,16 +69,17 @@ def get_result_data(user_id, snapshot_id, result_name):
     print(app.__dict__)
     return flask.jsonify(success=True, message=db_res[result_name])
 
+
 @app.route('/get_file/<f_type>/<f_format>/<file_id>', methods=['GET'])
 def get_jpg_file(f_type, f_format, file_id):
     fs_res = app.config['FS'].get(objectid.ObjectId(file_id))
     return app.response_class(fs_res.read(), direct_passthrough=True, mimetype=f_type + '/' + f_format)
 
 
-
 @click.group()
 def main():
     pass
+
 
 @main.command('run-server')
 @click.option('-h', '--host', default="127.0.0.1", help='target host')
@@ -99,4 +106,3 @@ def run_api_server(host, port, database_url):
 
 if __name__ == "__main__":
     main()
-

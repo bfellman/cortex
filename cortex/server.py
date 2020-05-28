@@ -21,7 +21,8 @@ app = flask.Flask(__name__)
 
 @app.route('/', methods=['POST'])
 def default_response():
-    return flask.jsonify(success=False, message="Only supported requests are POST with '/new_user' and '/snapshot' URLs")
+    return flask.jsonify(success=False,
+                         message="Only supported requests are POST with '/new_user' and '/snapshot' URLs")
 
 
 @app.route('/user', methods=['POST'])
@@ -49,8 +50,8 @@ def publish_snapshot(user_id):
     snapshot_client_msg = flask.request.data
     snapshot_client = cortex_client_pb2.Snapshot()
     snapshot_client.ParseFromString(snapshot_client_msg)
-    #build mq snapshot
-    datetime_str = datetime.fromtimestamp(snapshot_client.datetime/ 1000).strftime('%Y-%m-%d_%H-%M-%S_%f')
+    # build mq snapshot
+    datetime_str = datetime.fromtimestamp(snapshot_client.datetime / 1000).strftime('%Y-%m-%d_%H-%M-%S_%f')
     snapshot_dir = USERS_DIR / user_id / datetime_str
     snapshot_dir.mkdir(exist_ok=True)
 
@@ -69,6 +70,7 @@ def publish_snapshot(user_id):
     app.config['PUBLISH'](json.dumps(msg))
     return flask.jsonify(success=True)
 
+
 @click.group()
 def main():
     pass
@@ -82,11 +84,13 @@ def get_rabbit_mq_publish_function(url):
         exit(f"ERROR: can't connect to message queue: {url.geturl()}\n{e}")
     channel = connection.channel()
     channel.exchange_declare(exchange='cortex', exchange_type='topic')
+
     def publish(msg):
         return channel.basic_publish(exchange='cortex',
                                      routing_key='snapshot',
                                      body=msg)
     return publish
+
 
 @main.command('run-server')
 @click.option('-h', '--host', default="127.0.0.1", help='target host')
@@ -103,10 +107,9 @@ def run_server_cli(host, port, publish):
 
 def run_server(host, port, publish):
     app.config['PUBLISH'] = publish
-    #TODO remove debug
+    # TODO remove debug
     app.run(host, port, debug=True, threaded=True)
 
 
 if __name__ == "__main__":
     main()
-

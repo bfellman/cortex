@@ -24,7 +24,7 @@ def parse(parser_name, data):
     parsers = get_all_parsers()
     try:
         return parsers[parser_name](data)
-    except KeyError as e:
+    except KeyError:
         exit(f"ERROR: unknown parser '{parser_name}', available parsers are:'\n{list(parsers.keys())}")
 
 
@@ -45,12 +45,11 @@ def parse_cli(parser_name, path_to_data):
         print(f"ERROR reading file {path_to_data}\n{e}")
 
 
-
 @main.command('run-parser')
 @click.argument('parser_name',)
 @click.argument('mq_url')
 def run_parser_cli(parser_name, mq_url):
-    "Usage:  python -m cortex.parsers run-parser <parser_name>> <message_queue_url> "
+    """Usage:  python -m cortex.parsers run-parser <parser_name>> <message_queue_url> """
     parsers = get_all_parsers()
     if parser_name not in parsers:
         exit(f"ERROR: unknown parser '{parser_name}', available parsers are:'\n{list(parsers.keys())}")
@@ -66,6 +65,7 @@ def run_parser_cli(parser_name, mq_url):
         recv_queue_name = parser_name
         channel.queue_declare(recv_queue_name)
         channel.queue_bind(exchange='cortex', queue=recv_queue_name, routing_key='snapshot')
+
         def parse_msg(channel, method, properties, body):
             result = parse(parser_name, body)
             if result:
@@ -76,7 +76,7 @@ def run_parser_cli(parser_name, mq_url):
             queue=recv_queue_name, on_message_callback=parse_msg, auto_ack=True)
         channel.start_consuming()
     else:
-        exit(f"Unsupported messagq queue format {publish_url.scheme}")
+        exit(f"Unsupported message queue format {publish_url.scheme}")
 
 
 if __name__ == "__main__":

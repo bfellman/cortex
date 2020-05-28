@@ -16,11 +16,11 @@ def get_from_server(server_url, msg=""):
             err_msg = ""
             try:
                 err_msg = json.loads(response.text)['message']
-            except:
+            except Exception:
                 pass
             exit(f"ERROR: server response code is {response.status_code} {err_msg}")
         return json.loads(response.text)['message']
-    except (requests.exceptions.ConnectionError, requests.exceptions.ReadTimeout)  as e:
+    except (requests.exceptions.ConnectionError, requests.exceptions.ReadTimeout) as e:
         exit(f"ERROR: couldnt connect to Server at {server_url}, details:\n{e}")
 
 
@@ -89,6 +89,7 @@ def get_snapshot(host, port, user_id, snapshot_id):
         resp_dict = {'results': resp}
         print(f"# results for {user_id=} {snapshot_id=}:")
         print(tabulate(resp_dict, headers="keys"))
+
 
 @main.command('get-result')
 @click.option('-h', '--host', default="127.0.0.1", help='target api host')

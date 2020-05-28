@@ -2,7 +2,7 @@ import json
 import tempfile
 from pathlib import Path
 
-from PIL import Image as PIL
+from PIL import Image
 
 
 def parse_color_image(data):
@@ -14,7 +14,7 @@ def parse_color_image(data):
             res = dict()
             bin_path = color_image_dict['path']
             size = color_image_dict['width'], color_image_dict['height']
-            image = PIL.frombytes(mode='RGB', size=size, data=open(bin_path, 'rb').read())
+            image = Image.frombytes(mode='RGB', size=size, data=open(bin_path, 'rb').read())
             image.save(image_path)
             res['path'] = str(image_path)
             res['size'] = f"{size[0]}x{size[1]}"

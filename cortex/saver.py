@@ -40,17 +40,15 @@ class Saver:
                 snapshot_key['_id'] = snapshot_id
                 self.db.snapshots.insert(snapshot_key, {'$set': {topic_name: topic_dict}})
 
-
-
     def add_user(self, user_dict):
         self.db.users.update({'user_id': user_dict['user_id']}, user_dict, upsert=True)
 
-
     def handle_snapshot(self, data):
-        # listen to all anspshots to catch user id
+        # listen to all snapshots to catch user id
         unpacked_data = json.loads(data)
         if unpacked_data['msg_type'] == 'user':
             self.add_user(unpacked_data)
+
 
 @click.group()
 def main():
@@ -74,7 +72,7 @@ def saver_cli(topic, path_to_data, database):
 @click.argument('db_url_str')
 @click.argument('mq_url_str')
 def run_parser_cli(db_url_str, mq_url_str):
-    "Usage:  python -m cortex.saver run-saver <database_url>> <message_queue_url> "
+    """Usage:  python -m cortex.saver run-saver <database_url>> <message_queue_url> """
     saver = Saver(db_url_str)
     mq_url = urlparse(mq_url_str)
     if mq_url.scheme == 'rabbitmq':

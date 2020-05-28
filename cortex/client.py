@@ -16,8 +16,8 @@ def upload_sample(host, port, path):
     user = next(reader)
     send_msg_to_server(user, user_msg_url)
     snapshot_url = server_url + 'snapshot/' + str(user.user_id)
-    for sanpshot in reader:
-        send_msg_to_server(sanpshot, snapshot_url)
+    for snapshot in reader:
+        send_msg_to_server(snapshot, snapshot_url)
 
 
 def send_msg_to_server(msg, server_url):
@@ -25,8 +25,8 @@ def send_msg_to_server(msg, server_url):
         response = requests.post(server_url, data=msg.SerializeToString(), timeout=2)
         if response.status_code != requests.codes.ok:
             exit(f"ERROR: server response code is {response.status_code}, with message: {response.reason}")
-    except (requests.exceptions.ConnectionError, requests.exceptions.ReadTimeout)  as e:
-        exit(f"ERROR: couldnt connect to Server at {server_url}, details:\n{e}")
+    except (requests.exceptions.ConnectionError, requests.exceptions.ReadTimeout) as e:
+        exit(f"ERROR: couldn't connect to Server at {server_url}, details:\n{e}")
 
 
 def client_user_from_sample_user(sample_user):
