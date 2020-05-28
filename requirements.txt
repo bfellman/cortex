@@ -12,7 +12,7 @@ pymongo>=3.10.1
 # for Servers
 protobuf>=3.12.2
 grpcio-tools>=1.29.0
-requests>2.23.0
+requests>=2.23.0
 flask>=1.1.2
 
 # utils
