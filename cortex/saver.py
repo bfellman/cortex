@@ -1,12 +1,11 @@
+import json
 from pathlib import Path
-from pprint import pprint
 from urllib.parse import urlparse
 
 import click
+import gridfs
 import pika
 from pymongo import MongoClient, ASCENDING
-import gridfs
-import json
 
 
 class Saver:
@@ -20,7 +19,7 @@ class Saver:
             self.db.users.create_index([("user_id", ASCENDING)], unique=True)
             self.db.snapshots.create_index([("user_id", ASCENDING), ("datetime", ASCENDING)])
         else:
-            exit("Unknown DB")
+            exit(f"Unknown DB {parsed_url.scheme}")
 
     def save(self, topic_name, data):
         unpacked_data = json.loads(data)
@@ -28,8 +27,9 @@ class Saver:
             topic_dict = unpacked_data[topic_name]
             snapshot_key = {"user_id": unpacked_data['user_id'], 'datetime': unpacked_data['datetime']}
             for k, v in topic_dict.items():
-                if Path(str(v)).exists():
-                    topic_dict[k] = self.fs.put(open(v, 'rb'))
+                path_v = Path(str(v))
+                if path_v.exists():
+                    topic_dict[k] = self.fs.put(open(v, 'rb'), suffix=path_v.suffix)
             if self.db.snapshots.find_one(snapshot_key):
                 self.db.snapshots.update_many(snapshot_key, {'$set': {topic_name: topic_dict}})
             else:
@@ -39,14 +39,12 @@ class Saver:
                     snapshot_id = 0
                 snapshot_key['_id'] = snapshot_id
                 self.db.snapshots.insert(snapshot_key, {'$set': {topic_name: topic_dict}})
-        print('DB is')
-        pprint(list(self.db.snapshots.find())) #TODO remove
 
 
 
     def add_user(self, user_dict):
         self.db.users.update({'user_id': user_dict['user_id']}, user_dict, upsert=True)
-        pprint(list(self.db.users.find()))  # TODO remove
+
 
     def handle_snapshot(self, data):
         # listen to all anspshots to catch user id

@@ -1,7 +1,9 @@
 import gzip
 import struct
-import requests
+
 import click
+import requests
+
 from cortex import cortex_client_pb2
 from cortex import cortex_sample_pb2
 

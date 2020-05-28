@@ -1,6 +1,7 @@
 import json
 import tempfile
 from pathlib import Path
+
 from PIL import Image as PIL
 
 

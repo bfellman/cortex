@@ -1,14 +1,8 @@
-import gzip
-import struct
-import time
 from datetime import date, datetime
-from pprint import pprint
-
-import hyperlink
-import requests
-import sys
 
 import click
+import hyperlink
+import requests
 from flask import json
 from tabulate import tabulate
 

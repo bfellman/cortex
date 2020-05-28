@@ -1,7 +1,8 @@
 import importlib.util
 import json
-from urllib.parse import urlparse
 from pathlib import Path
+from urllib.parse import urlparse
+
 import click
 import pika
 

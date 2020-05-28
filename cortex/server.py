@@ -1,16 +1,18 @@
 import json
-from urllib.parse import urlparse
+import tempfile
 from datetime import datetime
-import numpy as np
-import pika
+from pathlib import Path
+from urllib.parse import urlparse
+
 import click
 import flask
+import numpy as np
+import pika
 import requests
-import tempfile
 from google import protobuf
 from google.protobuf.json_format import MessageToDict
+
 from cortex import cortex_client_pb2
-from pathlib import Path
 
 USERS_DIR = Path(tempfile.mkdtemp()) / "users"
 

@@ -1,4 +1,20 @@
-click>=7.1.1
-grpcio-tools>=1.28.1
+# for CLI
+click>=7.1.2
+tabulate>=0.8.7
+hyperlink>=19.0.0
+
+# for MQ
 pika>=1.1.0
-funcy
+
+# for DB
+pymongo>=3.10.1
+
+# for Servers
+protobuf>=3.12.2
+grpcio-tools>=1.29.0
+requests>2.23.0
+flask>=1.1.2
+
+# utils
+numpy>=1.18.4
+funcy>=1.14

@@ -1,15 +1,13 @@
-import json
-from pprint import pprint
-
 from urllib.parse import urlparse
+
 import click
 import flask
 import gridfs
-import hyperlink
 import requests
 from bson import objectid
-from pymongo import MongoClient
 from funcy import project
+from pymongo import MongoClient
+
 app = flask.Flask(__name__)
 
 @app.route('/', methods=['GET'])
