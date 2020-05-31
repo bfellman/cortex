@@ -18,3 +18,6 @@ flask>=1.1.2
 # utils
 numpy>=1.18.4
 funcy>=1.14
+
+# tests
+pytest-httpserver>=0.3.4

@@ -1,5 +1,6 @@
 import gzip
 import struct
+from pathlib import Path
 
 import click
 import requests
@@ -14,15 +15,15 @@ def upload_sample(host, port, path):
     server_url = f"http://{host}:{port}/"
     user_msg_url = server_url + "user"
     user = next(reader)
-    send_msg_to_server(user, user_msg_url)
+    send_msg_to_server(user.SerializeToString(), user_msg_url)
     snapshot_url = server_url + 'snapshot/' + str(user.user_id)
     for snapshot in reader:
-        send_msg_to_server(snapshot, snapshot_url)
+        send_msg_to_server(snapshot.SerializeToString(), snapshot_url)
 
 
 def send_msg_to_server(msg, server_url):
     try:
-        response = requests.post(server_url, data=msg.SerializeToString(), timeout=2)
+        response = requests.post(server_url, data=msg, timeout=2)
         if response.status_code != requests.codes.ok:
             exit(f"ERROR: server response code is {response.status_code}, with message: {response.reason}")
     except (requests.exceptions.ConnectionError, requests.exceptions.ReadTimeout) as e:
@@ -41,9 +42,17 @@ def client_snapshot_from_sample_snapshot(sample_snapshot):
     return client_snapshot
 
 
+def agnostic_open(path, mode):
+    path = Path(path)
+    if path.suffix == '.gz':
+        return gzip.open(path, mode)
+    else:
+        return open(path, mode)
+
+
 def sample_reader(path):
     try:
-        with gzip.open(path, 'rb') as sample_fh:
+        with agnostic_open(path, 'rb') as sample_fh:
             (msg_len,) = struct.unpack('I', sample_fh.read(4))
             sample_user = cortex_sample_pb2.User()
             sample_user.ParseFromString(sample_fh.read(msg_len))
