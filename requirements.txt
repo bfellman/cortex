@@ -21,3 +21,4 @@ funcy>=1.14
 
 # tests
 pytest-httpserver>=0.3.4
+coverage>=5.1

@@ -6,9 +6,11 @@ from urllib.parse import urlparse
 import click
 import pika
 
+PARSER_DIR = (Path(__file__).parent / "parser_dir")
+
 
 def get_all_parsers():
-    module_files = (Path(__file__).parent / "parser_dir").glob("*.py")
+    module_files = PARSER_DIR.glob("*.py")
     parsers = dict()
     for m_file in module_files:
         spec = importlib.util.spec_from_file_location(m_file.stem, m_file.absolute())
@@ -50,6 +52,10 @@ def parse_cli(parser_name, path_to_data):
 @click.argument('mq_url')
 def run_parser_cli(parser_name, mq_url):
     """Usage:  python -m cortex.parsers run-parser <parser_name>> <message_queue_url> """
+    run_parser_server(mq_url, parser_name)
+
+
+def run_parser_server(mq_url, parser_name):
     parsers = get_all_parsers()
     if parser_name not in parsers:
         exit(f"ERROR: unknown parser '{parser_name}', available parsers are:'\n{list(parsers.keys())}")
@@ -72,6 +78,7 @@ def run_parser_cli(parser_name, mq_url):
                 channel.basic_publish(exchange='cortex',
                                       routing_key=parser_name,
                                       body=json.dumps(result))
+
         channel.basic_consume(
             queue=recv_queue_name, on_message_callback=parse_msg, auto_ack=True)
         channel.start_consuming()
