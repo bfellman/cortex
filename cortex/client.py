@@ -1,13 +1,11 @@
-import gzip
 import struct
-from pathlib import Path
 
 import click
 import requests
 
 from cortex import cortex_client_pb2
 from cortex import cortex_sample_pb2
-
+from cortex.utils import agnostic_open
 
 def upload_sample(host, port, path):
     """upload sample to server"""
@@ -40,14 +38,6 @@ def client_snapshot_from_sample_snapshot(sample_snapshot):
     client_snapshot = cortex_client_pb2.Snapshot()
     client_snapshot.ParseFromString(sample_snapshot.SerializeToString())
     return client_snapshot
-
-
-def agnostic_open(path, mode):
-    path = Path(path)
-    if path.suffix == '.gz':
-        return gzip.open(path, mode)
-    else:
-        return open(path, mode)
 
 
 def sample_reader(path):
