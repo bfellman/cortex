@@ -31,7 +31,6 @@ def publish_user():
     user = cortex_client_pb2.User()
     try:
         user.ParseFromString(user_msg)
-        Path.mkdir(USERS_DIR / str(user.user_id), exist_ok=True, parents=True)
         msg = MessageToDict(user, preserving_proto_field_name=True)
         msg['msg_type'] = 'user'
         app.config['PUBLISH'](json.dumps(msg))
@@ -53,20 +52,22 @@ def publish_snapshot(user_id):
     # build mq snapshot
     datetime_str = datetime.fromtimestamp(snapshot_client.datetime / 1000).strftime('%Y-%m-%d_%H-%M-%S_%f')
     snapshot_dir = USERS_DIR / user_id / datetime_str
-    snapshot_dir.mkdir(exist_ok=True)
+    snapshot_dir.mkdir(exist_ok=True, parents=True)
 
     msg = MessageToDict(snapshot_client, preserving_proto_field_name=True)
     msg['user_id'] = user_id
     msg['msg_type'] = 'snapshot'
-    color_image_path = snapshot_dir / "color_image"
-    with open(color_image_path, 'wb') as fh:
-        fh.write(snapshot_client.color_image.data)
-    del msg['color_image']['data']
-    msg['color_image']['path'] = str(color_image_path)
-    depth_image_path = snapshot_dir / "depth_image.npy"
-    np.save(depth_image_path, msg['depth_image']['data'])
-    del msg['depth_image']['data']
-    msg['depth_image']['path'] = str(depth_image_path)
+    if 'color_image' in msg:
+        color_image_path = snapshot_dir / "color_image"
+        with open(color_image_path, 'wb') as fh:
+            fh.write(snapshot_client.color_image.data)
+        del msg['color_image']['data']
+        msg['color_image']['path'] = str(color_image_path)
+    if 'depth_image' in msg:
+        depth_image_path = snapshot_dir / "depth_image.npy"
+        np.save(depth_image_path, msg['depth_image']['data'])
+        del msg['depth_image']['data']
+        msg['depth_image']['path'] = str(depth_image_path)
     app.config['PUBLISH'](json.dumps(msg))
     return flask.jsonify(success=True)
 
