@@ -15,6 +15,10 @@ grpcio-tools>=1.29.0
 requests>=2.23.0
 flask>=1.1.2
 
+# for image processing:
+Pillow>=7.1.2
+matplotlib>=3.2.1
+
 # utils
 numpy>=1.18.4
 funcy>=1.14
