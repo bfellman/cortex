@@ -4,16 +4,24 @@ from urllib.parse import urlparse
 
 import click
 import gridfs
+import mongomock
 import pika
 from pymongo import MongoClient, ASCENDING
+from mongomock.gridfs import enable_gridfs_integration
 
 
 class Saver:
     def __init__(self, database_url):
         parsed_url = urlparse(database_url)
-        if parsed_url.scheme == 'mongodb':
-            client = MongoClient(parsed_url.hostname, parsed_url.port)
-            client.drop_database('cortex_db') #TODO remove
+        if 'mongo' in parsed_url.scheme:
+            if 'mongodb' == parsed_url.scheme:
+                client = MongoClient(parsed_url.hostname, parsed_url.port)
+                client.drop_database('cortex_db')
+            elif 'mockmongo' == parsed_url.scheme:
+                client = mongomock.MongoClient(parsed_url.hostname, parsed_url.port, connect=True)
+                enable_gridfs_integration()
+            else:
+                exit(f"Unknown DB {parsed_url.scheme}")
             self.db = client.cortex_db
             self.fs = gridfs.GridFS(self.db)
             self.db.users.create_index([("user_id", ASCENDING)], unique=True)
@@ -34,14 +42,15 @@ class Saver:
                 self.db.snapshots.update_many(snapshot_key, {'$set': {topic_name: topic_dict}})
             else:
                 try:
-                    snapshot_id = self.db.snapshots.find_one({'$query': {}, '$orderby': {'_id': -1}})['_id']+1
-                except TypeError:
+                    snapshot_id = self.db.snapshots.find_one({'$query': {"user_id": unpacked_data['user_id']}, '$orderby': {'_id': -1}})['_id']+1
+                except:
+                    assert self.db.snapshots.count_documents({}) == 0, "if we didn't find any snapshot, the db must be empty"
                     snapshot_id = 0
                 snapshot_key['_id'] = snapshot_id
-                self.db.snapshots.insert(snapshot_key, {'$set': {topic_name: topic_dict}})
+                self.db.snapshots.insert_one(snapshot_key, {'$set': {topic_name: topic_dict}})
 
     def add_user(self, user_dict):
-        self.db.users.update({'user_id': user_dict['user_id']}, user_dict, upsert=True)
+        self.db.users.update_one({'user_id': user_dict['user_id']}, {'$set': user_dict}, upsert=True)
 
     def handle_snapshot(self, data):
         # listen to all snapshots to catch user id
@@ -62,22 +71,26 @@ def main():
 def saver_cli(topic, path_to_data, database):
     """"saves <data> to <topic> in database"""
     try:
-        data = open(path_to_data, "rb").read()
-    except Exception as e:
-        print(f"ERROR reading file {path_to_data}\n{e}")
+        with open(path_to_data, 'r') as fh:
+            data = fh.read()
+    except IOError as e:
+        exit(f"ERROR reading file {path_to_data}\n{e}")
     Saver(database).save(topic, data)
 
 
 @main.command('run-saver')
 @click.argument('db_url_str')
 @click.argument('mq_url_str')
-def run_parser_cli(db_url_str, mq_url_str):
+def run_saver_cli(db_url_str, mq_url_str):
     """Usage:  python -m cortex.saver run-saver <database_url>> <message_queue_url> """
     saver = Saver(db_url_str)
     mq_url = urlparse(mq_url_str)
     if mq_url.scheme == 'rabbitmq':
         params = pika.ConnectionParameters(host=mq_url.hostname, port=mq_url.port)
-        connection = pika.BlockingConnection(params)
+        try:
+            connection = pika.BlockingConnection(params)
+        except Exception as e:
+            exit(f"ERROR: can't connect to message queue: {mq_url.geturl()}\n{e}")
         channel = connection.channel()
         # receiving queue
         recv_queue_name = 'saver'
