@@ -110,7 +110,7 @@ def run_server_cli(host, port, publish):
 def run_server(host, port, publish):
     app.config['PUBLISH'] = publish
     # TODO remove debug
-    app.run(host, port, debug=True, threaded=True)
+    app.run(host, port, debug=False, threaded=True)
 
 
 if __name__ == "__main__":

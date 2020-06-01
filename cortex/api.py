@@ -102,7 +102,7 @@ def connect_to_db(db_url):
 def run_api_server(host, port, database_url):
     app.config['DB'], app.config['FS'] = connect_to_db(database_url)
     app.config['HOST_URL'] = f"{host}:{port}"
-    app.run(host, port, debug=True, threaded=True)
+    app.run(host, port, debug=False, threaded=True)
 
 
 if __name__ == "__main__":
