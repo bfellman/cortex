@@ -1,9 +1,10 @@
 import json
 from datetime import datetime
 import pytest
+from click.testing import CliRunner
 from google.protobuf.json_format import MessageToDict
 
-from cortex.server import app
+from cortex import server
 from cortex import cortex_client_pb2
 
 
@@ -13,6 +14,7 @@ class Publisher:
 
     def publish(self, data):
         self.data += data
+
 
 @pytest.fixture
 def get_user():
@@ -43,8 +45,8 @@ def assert_and_del(test_dict, key_values):
 
 def test_user(get_user):
     p = Publisher()
-    app.config['PUBLISH'] = p.publish
-    response = app.test_client().post("/user", data=get_user.SerializeToString())
+    server.app.config['PUBLISH'] = p.publish
+    response = server.app.test_client().post("/user", data=get_user.SerializeToString())
     assert response.status_code == 200
     msg_dict = json.loads(p.data)
     assert_and_del(msg_dict, [('msg_type', 'user'), ('gender', 'MALE')])
@@ -53,10 +55,9 @@ def test_user(get_user):
 
 
 def test_snapshot(get_snapshot):
-
     p = Publisher()
-    app.config['PUBLISH'] = p.publish
-    response = app.test_client().post("/snapshot/1", data=get_snapshot.SerializeToString())
+    server.app.config['PUBLISH'] = p.publish
+    response = server.app.test_client().post("/snapshot/1", data=get_snapshot.SerializeToString())
     assert response.status_code == 200
     msg_dict = json.loads(p.data)
     assert_and_del(msg_dict, [('msg_type', 'snapshot'), ('user_id', "1")])
@@ -64,3 +65,7 @@ def test_snapshot(get_snapshot):
     assert snapshot_dict == msg_dict
 
 
+def test_run_server():
+    runner = CliRunner()
+    res = runner.invoke(server.run_server_cli, 'rabbitmq://127.0.0.1:8888/')
+    assert res.exception and "can't connect to message queue" in res.output

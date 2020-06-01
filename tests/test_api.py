@@ -1,6 +1,7 @@
 import json
 from datetime import datetime, date
 
+import mongomock
 import pytest
 
 from cortex.api import app
@@ -11,11 +12,12 @@ FEELINGS = {'hunger': 0.5, 'exhaustion': 0.25, 'happiness': 0.75, 'thirst': -0.2
 
 
 @pytest.fixture
-def setup_api(mongodb):
+def setup_api():
+        db = mongomock.MongoClient().db
         snapshot = {'datetime': str(int(datetime.fromisoformat(NOW).timestamp())), 'feelings': FEELINGS}
-        mongodb.users.update_one({'user_id': '1'}, {'$set': USER}, upsert=True)
-        mongodb.snapshots.update_one({'_id':0, 'user_id': '1', 'datetime': snapshot['datetime']}, {'$set': snapshot}, upsert=True)
-        app.config['DB'] = mongodb
+        db.users.update_one({'user_id': '1'}, {'$set': USER}, upsert=True)
+        db.snapshots.update_one({'_id':0, 'user_id': '1', 'datetime': snapshot['datetime']}, {'$set': snapshot}, upsert=True)
+        app.config['DB'] = db
 
 
 def test_get_users(setup_api):
