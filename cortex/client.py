@@ -1,3 +1,4 @@
+import logging
 import struct
 
 import click
@@ -20,6 +21,7 @@ def upload_sample(host, port, path):
 
 
 def send_msg_to_server(msg, server_url):
+    logging.debug(f'Sending {msg} to {server_url}')
     try:
         response = requests.post(server_url, data=msg, timeout=2)
         if response.status_code != requests.codes.ok:
@@ -60,6 +62,7 @@ def sample_reader(path):
 
 @click.group()
 def main():
+    logging.basicConfig(filename='client.log', level=logging.INFO)
     pass
 
 

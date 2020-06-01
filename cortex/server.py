@@ -3,7 +3,6 @@ import tempfile
 from datetime import datetime
 from pathlib import Path
 from urllib.parse import urlparse
-
 import click
 import flask
 import numpy as np

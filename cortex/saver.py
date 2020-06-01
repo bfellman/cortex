@@ -1,4 +1,5 @@
 import json
+import logging
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -32,6 +33,7 @@ class Saver:
     def save(self, topic_name, data):
         unpacked_data = json.loads(data)
         if topic_name in unpacked_data:
+            logging.debug(f'going to save {unpacked_data} in db.snapshots')
             topic_dict = unpacked_data[topic_name]
             snapshot_key = {"user_id": unpacked_data['user_id'], 'datetime': unpacked_data['datetime']}
             for k, v in topic_dict.items():
@@ -61,6 +63,7 @@ class Saver:
 
 @click.group()
 def main():
+    logging.basicConfig(filename='saver.log', level=logging.INFO)
     pass
 
 
