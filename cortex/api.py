@@ -2,11 +2,12 @@ from urllib.parse import urlparse
 
 import click
 import flask
-import gridfs
 import requests
-from bson import objectid
 from funcy import project
 from pymongo import MongoClient
+import gridfs
+from bson import objectid
+
 
 app = flask.Flask(__name__)
 
