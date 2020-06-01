@@ -24,18 +24,6 @@ def get_from_server(server_url, msg=""):
         exit(f"ERROR: couldnt connect to Server at {server_url}, details:\n{e}")
 
 
-def client_user_from_sample_user(sample_user):
-    client_user = cortex_client_pb2.User()
-    client_user.ParseFromString(sample_user.SerializeToString())
-    return client_user
-
-
-def client_snapshot_from_sample_snapshot(sample_snapshot):
-    client_snapshot = cortex_client_pb2.Snapshot()
-    client_snapshot.ParseFromString(sample_snapshot.SerializeToString())
-    return client_snapshot
-
-
 @click.group()
 def main():
     pass
