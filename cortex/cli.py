@@ -33,6 +33,7 @@ def main():
 @click.option('-h', '--host', default="127.0.0.1", help='target api host')
 @click.option('-p', '--port', default="5000", help='target api port')
 def get_users(host, port):
+    """get all users"""
     req_url = f"http://{host}:{port}/users"
     resp = get_from_server(req_url)
     if resp:
@@ -44,6 +45,7 @@ def get_users(host, port):
 @click.option('-p', '--port', default="5000", help='target api port')
 @click.argument('user_id')
 def get_user(host, port, user_id):
+    """get all info about a specific user (use same id displayed in get-users"""
     req_url = f"http://{host}:{port}/users/{user_id}"
     resp = get_from_server(req_url)
     if resp:
@@ -56,6 +58,7 @@ def get_user(host, port, user_id):
 @click.option('-p', '--port', default="5000", help='target api port')
 @click.argument('user_id')
 def get_snapshots(host, port, user_id):
+    """get list of all snapshots for a specific user"""
     req_url = f"http://{host}:{port}/users/{user_id}/snapshots"
     resp = get_from_server(req_url)
     if resp:
@@ -71,6 +74,7 @@ def get_snapshots(host, port, user_id):
 @click.argument('user_id')
 @click.argument('snapshot_id')
 def get_snapshot(host, port, user_id, snapshot_id):
+    """get list of all results for a specific snapshot of a speicific user (use same ID as the one printed in get-snapshots"""
     req_url = f"http://{host}:{port}/users/{user_id}/snapshots/{snapshot_id}"
     resp = get_from_server(req_url)
     if resp:
@@ -86,6 +90,7 @@ def get_snapshot(host, port, user_id, snapshot_id):
 @click.argument('snapshot_id')
 @click.argument('result_name')
 def get_result(host, port, user_id, snapshot_id, result_name):
+    """get detailed result, from the available results presented by get-snapshot"""
     req_url = f"http://{host}:{port}/users/{user_id}/snapshots/{snapshot_id}/{result_name}"
     resp = get_from_server(req_url)
     if resp:

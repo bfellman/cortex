@@ -71,6 +71,7 @@ def main():
 @click.option('-p', '--port', default="8000", help='target port')
 @click.argument('path')
 def upload_sample_cli(host, port, path):
+    """Upload a snapshot sample to server, format should match cortex/protos/cortex.proto"""
     upload_sample(host, port, path)
 
 

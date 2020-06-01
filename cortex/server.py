@@ -96,19 +96,21 @@ def get_rabbit_mq_publish_function(url):
 @main.command('run-server')
 @click.option('-h', '--host', default="127.0.0.1", help='target host')
 @click.option('-p', '--port', default="8000", help='target port')
-@click.argument('publish')
-def run_server_cli(host, port, publish):
-    publish_url = urlparse(publish)
-    publish_function = {'rabbitmq': get_rabbit_mq_publish_function(publish_url)}
+@click.argument('publish_url')
+def run_server_cli(host, port, publish_url):
+    """run server to receives snapshots from client. snapshots are slightly processed (data stored, metadata added, etc)
+    and published based on URL.
+    Currently, only RabbitMQ urls are supported"""
+    parsed_publish_url = urlparse(publish_url)
+    publish_function = {'rabbitmq': get_rabbit_mq_publish_function(parsed_publish_url)}
     try:
-        run_server(host, port, publish_function[publish_url.scheme])
+        run_server(host, port, publish_function[parsed_publish_url.scheme])
     except KeyError as e:
         exit(f"Unknown publishing scheme '{e}', supported schemes are:\n{publish_function.keys()}")
 
 
 def run_server(host, port, publish):
     app.config['PUBLISH'] = publish
-    # TODO remove debug
     app.run(host, port, debug=False, threaded=True)
 
 

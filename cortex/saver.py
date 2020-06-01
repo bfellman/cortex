@@ -85,7 +85,7 @@ def saver_cli(topic, path_to_data, database):
 @click.argument('db_url_str')
 @click.argument('mq_url_str')
 def run_saver_cli(db_url_str, mq_url_str):
-    """Usage:  python -m cortex.saver run-saver <database_url>> <message_queue_url> """
+    """Usage:  python -m cortex.saver run-saver <database_url>> <message_queue_url>"""
     saver = Saver(db_url_str)
     mq_url = urlparse(mq_url_str)
     if mq_url.scheme == 'rabbitmq':

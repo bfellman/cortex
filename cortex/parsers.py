@@ -39,7 +39,8 @@ def main():
 @click.argument('parser_name')
 @click.argument('data')
 def parse_cli(parser_name, path_to_data):
-    """Usage:  python -m cortex.parsers parse <parser_name>> <path_to_data>"""
+    """Usage:  python -m cortex.parsers parse <parser_name> <path_to_data>
+    call parser to parse file with raw data (expected json dump) """
     try:
         data = open(path_to_data, "rb").read()
         print(parse(parser_name, data))
@@ -51,7 +52,9 @@ def parse_cli(parser_name, path_to_data):
 @click.argument('parser_name',)
 @click.argument('mq_url')
 def run_parser_cli(parser_name, mq_url):
-    """Usage:  python -m cortex.parsers run-parser <parser_name>> <message_queue_url> """
+    """Usage:  python -m cortex.parsers run-parser <parser_name>> <message_queue_url>
+    listen to message queue in <me_url> and call parser on any message with 'parser_name' attribute.
+    `parser_name` can be any function defined in cortex.parser_dir.* as long as it starts with 'parse_NAME'"""
     run_parser_server(mq_url, parser_name)
 
 
