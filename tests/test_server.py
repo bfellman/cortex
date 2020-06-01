@@ -35,15 +35,19 @@ def get_snapshot():
     return snapshot
 
 
+def assert_and_del(test_dict, key_values):
+    for k, v in key_values:
+        assert test_dict[k] == v
+        del test_dict[k]
+
+
 def test_user(get_user):
     p = Publisher()
     app.config['PUBLISH'] = p.publish
     response = app.test_client().post("/user", data=get_user.SerializeToString())
     assert response.status_code == 200
     msg_dict = json.loads(p.data)
-    assert msg_dict['msg_type'] == 'user'
-    del msg_dict['msg_type']
-
+    assert_and_del(msg_dict, [('msg_type', 'user'), ('gender', 'MALE')])
     user_dict = MessageToDict(get_user, preserving_proto_field_name=True)
     assert user_dict == msg_dict
 
@@ -55,10 +59,8 @@ def test_snapshot(get_snapshot):
     response = app.test_client().post("/snapshot/1", data=get_snapshot.SerializeToString())
     assert response.status_code == 200
     msg_dict = json.loads(p.data)
-    for k, v in [('msg_type', 'snapshot'), ('user_id', "1")]:
-        assert msg_dict[k] == v
-        del msg_dict[k]
-
+    assert_and_del(msg_dict, [('msg_type', 'snapshot'), ('user_id', "1")])
     snapshot_dict = MessageToDict(get_snapshot, preserving_proto_field_name=True)
     assert snapshot_dict == msg_dict
+
 

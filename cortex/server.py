@@ -33,6 +33,7 @@ def publish_user():
         user.ParseFromString(user_msg)
         msg = MessageToDict(user, preserving_proto_field_name=True)
         msg['msg_type'] = 'user'
+        msg['gender'] = user.Gender.Name(user.gender)
         app.config['PUBLISH'](json.dumps(msg))
 
     except protobuf.message.DecodeError as e:

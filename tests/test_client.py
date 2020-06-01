@@ -12,6 +12,7 @@ def test_user():
     assert user.username == "Dan Gittik"
     assert user.user_id == 42
     assert date.fromtimestamp(user.birthday) == date.fromisoformat("1992-03-05")
+    assert user.gender == 0
 
 
 def test_snapshot():
