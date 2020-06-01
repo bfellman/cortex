@@ -63,7 +63,7 @@ class Saver:
 
 @click.group()
 def main():
-    logging.basicConfig(filename='saver.log', level=logging.INFO)
+    logging.basicConfig(filename='/tmp/.saver.log', level=logging.INFO)
     pass
 
 

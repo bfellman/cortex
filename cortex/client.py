@@ -62,7 +62,7 @@ def sample_reader(path):
 
 @click.group()
 def main():
-    logging.basicConfig(filename='client.log', level=logging.INFO)
+    logging.basicConfig(filename='/tmp/.client.log', level=logging.INFO)
     pass
 
 
