@@ -69,7 +69,13 @@ $ python -m cortex.server run-server --host '127.0.0.1' --port 8000 'rabbitmq://
 ```
 The positional argument is a URL to a [message queue](#message-queue). Currently, only `RabbitMQ` is supported (host and port default values are aligned with the ones used in [scripts/run-pipeline.sh](scripts/run-pipeline.sh)) 
 
-Note that the server doesn't send raw data of big files, but rather stores data to a temporary location and sends the path on [message queue](#message-queue) (assuming future consumers share FS. and will access it soon)  
+#### Client-Server protocol
+Communication is done using 2 `POST` requests. The client must first send the user message as defined in [cortex/protos/cortex.proto](cortex/protos/cortex.proto), using `POST /user`, and only then send snapshotss using `POST /snapshot/<user_id>`
+
+#### Server-MQ
+The server converts the protobuf messages to json, and adds a `msg_type` field to distinguish between `user` and `snapshot` messages, which are consumed differently by MQ consumers. In addition, the server stores raw-data to temporay locaton on local file system, and adds the path to the `snapshot` message
+
+
 ### Message Queue
 All services are connected through `RabbitMQ`, and share a `topic` exchange.
 The [server](#server) publishes under the `snapshot` topic, and the [parsers](#parsers) publish under their dedicated topics
@@ -94,7 +100,8 @@ Existing parsers:
 |feelings|[cortex/parser_dir/feelings.py](cortex/parser_dir/feelings.py) |Collects the feelings the user was experiencing at any timestamp, and publishes the result to a dedicated topic|
  
 ### Saver
-The Saver listens to [message queue](#message-queue) and stores parsed results to MongoDB database, while raw data is stored in GridFS and MongoDB only holds a pointer to the GridFS object. 
+The Saver listens to [message queue](#message-queue) and stores parsed results to MongoDB database, while any path to file is read from local disk and stored in GridFS and MongoDB only holds a pointer to the GridFS object.
+Since topics aren't known in advance, the Saver also listens to all messages in queue, including raw messages from the server in case one of them is a user message,  since it's not guaranteed the user messages are processes somehow. 
 
 Saver is launched using [scripts/run-pipeline.sh](scripts/run-pipeline.sh), but can be run directly using CLI:
 ```bash
