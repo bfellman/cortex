@@ -54,7 +54,10 @@ Run client using CLI:
 $ python -m cortex.client upload-sample --host '127.0.0.1' --port 8000 '<SNAPSHOT.mind.gz>'
 # '--host' and '--port' are optioanl knobs, the above value is their default
 ```
-Example for such a file is provided in [tests/inputs/3_entries.mind.gz](tests/inputs/3_entries.mind.gz])
+Example for such a file is provided in [tests/inputs/3_entries.mind.gz](tests/inputs/3_entries.mind.gz]), so you can try it out of the box:
+```bash
+$ python -m cortex.client upload-sample tests/inputs/3_entries.mind.gz
+```
 
 File protobuf format defined in [cortex/protos/cortex.proto](cortex/protos/cortex.proto), note that each protobuf snapshot message is preceded by a uint32 specifiying the expected message size   
 
