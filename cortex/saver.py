@@ -1,5 +1,6 @@
 import json
 import logging
+from datetime import datetime
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -63,7 +64,8 @@ class Saver:
 
 @click.group()
 def main():
-    logging.basicConfig(filename='/tmp/.saver.log', level=logging.INFO)
+    # excuse the file pollution, best practice would be to enable logging by knob
+    logging.basicConfig(filename=f'/tmp/.saver_{datetime.now().isoformat()}.log', level=logging.INFO)
     pass
 
 

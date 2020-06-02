@@ -1,3 +1,4 @@
+from datetime import datetime
 import logging
 import struct
 
@@ -62,7 +63,8 @@ def sample_reader(path):
 
 @click.group()
 def main():
-    logging.basicConfig(filename='/tmp/.client.log', level=logging.INFO)
+    # excuse the file pollution, best practice would be to enable logging by knob
+    logging.basicConfig(filename=f'/tmp/.client_{datetime.now().isoformat()}.log', level=logging.INFO)
     pass
 
 
