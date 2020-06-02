@@ -27,3 +27,5 @@ funcy>=1.14
 pytest-httpserver>=0.3.4
 pytest-cov>=2.9.0
 mongomock>=3.19.0
+
+sphinx-click>=2.3.2
