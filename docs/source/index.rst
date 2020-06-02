@@ -10,8 +10,9 @@ Welcome to Cortex's documentation!
    :maxdepth: 2
    :caption: Contents:
 
-   client
-   services
+   README
+   api_reference
+
 
 
 Indices and tables

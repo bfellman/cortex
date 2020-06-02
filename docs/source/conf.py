@@ -13,7 +13,8 @@
 import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parents[2]))
-
+import recommonmark
+from recommonmark.transform import AutoStructify
 # -- Project information -----------------------------------------------------
 
 project = 'Cortex'
@@ -34,6 +35,8 @@ extensions = [
     'sphinx_click.ext',
     'recommonmark',
 ]
+autosectionlabel_prefix_document = True
+
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 
@@ -53,4 +56,11 @@ html_theme = 'classic'
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
+
 html_static_path = ['_static']
+def setup(app):
+    app.add_config_value('recommonmark_config', {
+            'url_resolver': lambda url: "https://github.com/bfellman/cortex"+ url,
+            'auto_toc_tree_section': 'Contents',
+            }, True)
+    app.add_transform(AutoStructify)
